@@ -1,0 +1,6 @@
+feedback:
+
+1. refactor 2nd question    v/
+2. logic in 3rd question        v/
+3. all variables should be readable     v/
+4. in 4th question, make it object of objects   v/

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>  
+    <head>  
+            <script src="https://d3js.org/d3.v5.min.js"></script> 
+        <script src="https://code.highcharts.com/highcharts.js"></script>
+        <script src="https://code.highcharts.com/modules/exporting.js"></script>
+        <script src="https://code.highcharts.com/modules/export-data.js"></script>
+                
+    </head>
+
+    <body>  
+        <div id="container" style="min-width: 310px; max-width: 900px; height: 600px; margin: 20px auto"></div>
+
+        <script>    
+                let matchesInYear={};
+                    d3.json("../data/matchesJSON.json")
+                    .then(matches => {
+                        console.log(matches);
+                        for(match of matches){
+                            if(matchesInYear.hasOwnProperty(match.season)){
+                                matchesInYear[match.season]++;
+                            } else {
+                                matchesInYear[match.season]=1;
+                            }
+                        }
+                        Highcharts.chart('container', {
+                        chart: {
+                            type: 'column',
+                            //zoomType:"xy"
+                            type: 'column',
+                            //zoomType:'xy',
+                            backgroundColor:"rgba(0,0,0,0.1)",
+                            // borderColor:"black",
+                            borderRadius:"20px",
+                            borderWidth: 2,
+                            borderColor:"#444",
+                            marginTop:"100",
+                            marginRight:"50",
+                            plotBackgroundColor: '#fff',
+                            plotShadow: true,
+                            plotMargin:"20px"
+                        },
+                        title: {
+                            text: 'Matches played per year in IPL',
+                            style: {
+                                    color: 'darkbrown',
+                                    fontWeight: 'bold'
+                                }
+                        },
+                        subtitle: {
+                            text: ""
+                        },
+                        xAxis: {
+                            categories: Object.keys(matchesInYear),
+                            title: {
+                            //text: "years"
+                            },
+                            labels: {
+                                style: {
+                                    color: 'black',
+                                    fontSize:'12px',
+                                    fontWeight:""
+                                }
+                            }
+                        },
+                        yAxis: {
+                            min: 0,
+                            title: {
+                            text: 'Matches',
+                            align: 'middle'
+                            },
+                            labels: {
+                            overflow: 'justify',
+                            style: {
+                                    color: 'black',
+                                    fontSize:'12px',
+                                    fontWeight:""
+                                }
+                            }
+                        },
+                        tooltip: {
+                            valueSuffix: ' '
+                        },
+                        plotOptions: {
+                            bar: {
+                            dataLabels: {
+                                enabled: true
+                            }
+                            },
+                            column: {
+                                states: {
+                                    hover: {
+                                        color: '#66ffff'                                                           
+                                    }
+                                }
+                            },
+                        },
+                       
+                        legend: {
+                            layout: 'vertical',
+                            align: 'right',
+                            verticalAlign: 'top',
+                            x: -40,
+                            y: 45,
+                            floating: true,
+                            borderWidth: 1,
+                            backgroundColor: ((Highcharts.theme && Highcharts.theme.legendBackgroundColor) || '#FFFFFF'),
+                            shadow: true
+                        },
+                        credits: {
+                            enabled: true
+                        },
+                        series: [{
+                            name: 'Matches',
+                            data: Object.values(matchesInYear)
+                        }]
+                        });
+                        console.log(matchesInYear);
+                        console.log(Object.values(matchesInYear));
+                    }).catch((console.log));
+                    
+        </script>
+        <script>
+                    
+            
+        </script>
+    </body>
+</html>

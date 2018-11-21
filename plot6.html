@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html>  
+    <head>
+        <title> Shane Watson - IPL</title>
+        <link rel="icon" type="image/png" href="./data/ipl.png">
+        <script src="https://d3js.org/d3.v5.min.js"></script>   
+        <script src="https://code.highcharts.com/highcharts.js"></script>
+        <script src="https://code.highcharts.com/modules/series-label.js"></script>
+        <script src="https://code.highcharts.com/modules/exporting.js"></script>
+        <script src="https://code.highcharts.com/modules/export-data.js"></script>
+        <style> 
+        body{
+            font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+            background-color: bisque;
+            margin: 0px;
+        }
+        h1{
+            color:rgb(248, 248, 109);
+            background-color: rgb(218, 85, 67);
+            width : 100%;
+            line-height: 90px;
+            text-align: center;
+            padding: 20px auto;
+            margin: 0px auto 20px;
+            font-family:Verdana, Geneva, Tahoma, sans-serif;
+            box-shadow: 0px 10px 10px 0px rgba(128, 5, 5, 0.7);
+            font-size: 44px;
+        }
+        .bio{
+            text-align: justify;
+            padding: 20px;
+        }
+        #main{
+            /* min-width:800px;
+            max-width:85%; */
+            width:1100px;
+            margin: 20px auto;
+            margin-top: 0px;
+            background-color:beige;
+            box-shadow: 10px 10px 10px 0px rgba(180, 44, 44,0.2),-10px 10px 10px 0px rgba(180, 44, 44,0.2);
+            padding-bottom: 20px;
+            }
+        h2{
+            color: rgb(173, 18, 18);
+            text-align: center;
+        }
+        .plotDiv{
+            min-width: 250px;
+            max-width: 70%;
+            height:300px;
+            margin: auto;
+            background-color:"rgba(0,0,0,0.4)";
+            padding: 20px;
+            border: 2px solid rgba(180, 44, 44,0.5);
+            border-radius: 20px;
+            margin:10px auto ; 
+        }
+        .bio{
+            min-height: 300px;
+        }
+        #bioText{
+            margin:10px;
+            font-size: 18px;
+        }
+        #bioPic{
+            float:right;
+            width: 20%;
+            margin: 10px;
+            border-radius: 10px;
+            box-shadow: 5px 5px 5px 0px rgba(105, 41, 4, 0.7);
+        }
+        @media (max-width: 1200px){
+            #main{
+                width: 80%;
+            }
+        }
+        @media (max-width: 700px) {
+            h1{
+                font-size: 30px;
+            }
+            #bioPic{
+            float:right;
+            width: 40%;
+            margin: 50px;
+            }
+            .plotDiv{
+                min-width: 200px;
+                max-width: 80%;
+                max-height:200px;
+                margin: auto;
+                background-color:"rgba(0,0,0,0.4)";
+                padding: 20px;
+                border: 2px solid rgba(180, 44, 44,0.5);
+                border-radius: 20px;
+                margin:10px auto ; 
+            }
+        }
+        .targetImg{
+            min-width: 150px;
+            max-width: 60%;
+            display: block;
+            margin: auto;
+            border-radius: 20px;
+            padding: 10px;
+        }
+        </style>
+    </head>
+
+    <body>  
+        <main id='main'>
+            <h1>Shane Watson's IPL career</h1>
+            <div class='bio'>
+                <img id='bioPic' src="./data/srWatson.jpg">
+                <p id='bioText'> Shane Robert Watson (born 17 June 1981) is a former Australian international cricketer and a former captain, who played all formats of the game.He played as a right-handed batsman and a right-handed fast-medium swing bowler. 
+                He debuted in 2002 in a One Day International and retired in 2016[2] as world No. 1 T20I all-rounder.
+                He was the last player to retire from Australia's golden era of the early 2000s. <br> <br>
+                Watson holds several records in T20Is, ODIs and T20s. According to Forbes, Watson was the highest-paid non-Indian cricketer in the world for five consecutive years, 2011 to 2015. <br> <br>
+                Watson is the only player to lead most runs, most wickets, highest score, highest batting average, most sixes, for a team in T20, which he held for 4 years (2014–17). Also the first player to win man of the tournament IPL twice.
+                </p>
+                
+            </div>
+            <div class='plotContainer'>
+                <h2>Total Runs</h2>
+                <div id="runs" class='plotDiv' ></div>
+            </div>
+            <img class="targetImg" src='./data/batting.jpg'>
+            <div class='plotContainer'>
+                <h2>50's and 100's</h2>
+                <div id="targetRuns"class='plotDiv' ></div>
+            </div>
+            <div class='plotContainer'>
+                <h2>Strike Rate</h2>
+                <div id="strikeRate" class='plotDiv'> </div>
+            </div>
+            <img class="targetImg" src='./data/bowling.jpg'>
+            <div class='plotContainer'>
+                <h2>Bowling Economy</h2>
+                <div id="econ" class='plotDiv'></div>
+            </div>
+            
+        </main>
+
+        
+    </body>
+
+    <script> 
+        d3.json("../data/matchesJSON.json")
+        .then(matches => {
+            let seasonIds={};
+            for(let match of matches){
+                if(!seasonIds.hasOwnProperty(match.season)){
+                    seasonIds[match.season]=[match.id];
+                }else{
+                    seasonIds[match.season].push(match.id);
+                }
+            }
+            //console.log(seasonIds);
+            function getYearFromId(delivery){
+                let year=0;
+                for(season in seasonIds){
+                        if(seasonIds[season].includes(delivery.match_id)){
+                            year=season;
+                        }
+                }
+                return year;
+            }
+            let SRWatson={};
+            let player='SR Watson';
+            let runsTargetFlag={match: 0,
+                                runs: 0,
+                                fifties: 0,
+                                hundereds: 0};
+            d3.json("../data/deliveriesJSON.json")
+            .then(deliveries => {
+                
+                for(delivery of deliveries){
+                    let year=getYearFromId(delivery);
+                    /* ********** */
+                    if(!SRWatson.hasOwnProperty(year)){
+                        SRWatson[year]={ballsFaced: 0,
+                                        runs: 0,
+                                        halfCenturies: 0,
+                                        centuries: 0,
+                                        //strikeRate: 0,
+                                        bowling: {"runs": 0,
+                                                "deliveries": 0,
+                                                "extras": 0}
+                                        };
+                    }                
+                    if(delivery.batsman==player){
+                        SRWatson[year].runs += parseInt(delivery.total_runs);
+                        SRWatson[year].ballsFaced +=1;
+
+                        if(runsTargetFlag.match != delivery.match_id){
+                            SRWatson[year].halfCenturies+= parseInt(parseInt(runsTargetFlag.runs)/50);
+                            let centuries= parseInt(parseInt(runsTargetFlag.runs)/100)
+                            if(centuries > 0){
+                                SRWatson[year].centuries+= centuries;
+                                SRWatson[year].halfCenturies-= (2*centuries);
+                            }
+                            runsTargetFlag.match=delivery.match_id;
+                            runsTargetFlag.runs=0;
+                            runsTargetFlag.fifties=0;
+                            runsTargetFlag.hundereds=0;
+                        }else{
+                            runsTargetFlag.runs+= parseInt(delivery.total_runs);
+                            runsTargetFlag.fifties+= parseInt(parseInt(runsTargetFlag.runs)/50);
+                            runsTargetFlag.hundereds+= parseInt(parseInt(runsTargetFlag.runs)/100);
+
+                        }
+                    }
+                    else if(delivery.bowler==player){
+                        let isExtra=delivery.extra_runs>0?1:0;
+                        SRWatson[year].bowling.runs+=parseInt(delivery.total_runs);
+                        SRWatson[year].bowling.deliveries++;
+                        SRWatson[year].bowling.extras+=parseInt(delivery.extra_runs);
+                    }
+                }
+
+                let totalRunsPerYear={};
+                for(year of Object.keys(SRWatson)){
+                    totalRunsPerYear[year]=SRWatson[year].runs;
+                }
+                console.log(totalRunsPerYear);
+
+
+                let econ={};
+                for(year of Object.keys(SRWatson)){
+                    if(SRWatson[year].bowling.deliveries!=0){
+                        economy = SRWatson[year].bowling.runs/((SRWatson[year].bowling.deliveries-SRWatson[year].bowling.extras)/6);
+                        econ[year]= Number(economy).toFixed(2);
+                    }else {
+                        econ[year]= 0;
+                    }
+                }
+                console.log(econ);
+                
+
+                let strikeRate={};
+                for(year of Object.keys(SRWatson)){
+                    if(SRWatson[year].bowling.deliveries!=0){
+                        strikeRatePerYear=Number(SRWatson[year].runs) * 100/Number(SRWatson[year].ballsFaced);
+                        strikeRate[year]=Number(strikeRatePerYear).toFixed(2);
+                    }else{
+                        strikeRate[year]=0;
+                    }
+                }
+                console.log(strikeRate);
+
+                console.log(SRWatson);
+        
+
+       
+                Highcharts.chart('runs', {
+                    title: {
+                    text: 'Shane Watson\'s highest runs in IPL seasons' 
+                    },
+                    subtitle: {
+                    text: ""
+                    },
+                    xAxis: {
+                            categories: Object.keys(totalRunsPerYear),
+                            labels: {
+                            style: {
+                                color: 'black',
+                                fontSize:'12px',
+                                fontWeight:""
+                            }
+                            }
+                    },
+                    yAxis: {
+                        title: {
+                            text: ''
+                        }
+                    },
+                    legend: {
+                    layout: 'vertical',
+                    align: 'right',
+                    verticalAlign: 'middle'
+                    },
+                    series: [{
+                        name: "Runs",
+                        data: Object.values(totalRunsPerYear)
+                    }],
+
+                    responsive: {
+                    rules: [{
+                        condition: {
+                        maxWidth: 500
+                        },
+                        chartOptions: {
+                        legend: {
+                            layout: 'horizontal',
+                            align: 'center',
+                            verticalAlign: 'bottom'
+                        }
+                        }
+                    }]
+                    }
+                });
+
+
+                    Highcharts.chart('strikeRate', {
+                    title: {
+                    text: 'Shane Watson\'s strike rate in IPL seasons' 
+                    },
+                    subtitle: {
+                    text: ""
+                    },
+                    xAxis: {
+                            categories: Object.keys(strikeRate),
+                            labels: {
+                            style: {
+                                color: 'black',
+                                fontSize:'12px',
+                                fontWeight:""
+                            }
+                            }
+                    },
+                    yAxis: {
+                        title: {
+                            text: ''
+                        }
+                    },
+                    legend: {
+                    layout: 'vertical',
+                    align: 'right',
+                    verticalAlign: 'middle'
+                    },
+                    series: [{
+                        name: "Strike Rate",
+                        data:Object.values(strikeRate).map(a => Number(a))
+                    }],
+
+                    responsive: {
+                    rules: [{
+                        condition: {
+                        maxWidth: 500
+                        },
+                        chartOptions: {
+                        legend: {
+                            layout: 'horizontal',
+                            align: 'center',
+                            verticalAlign: 'bottom'
+                        }
+                        }
+                    }]
+                    }
+
+                });
+
+
+                Highcharts.chart('econ', {
+                    title: {
+                    text: 'Shane Watson\'s bowling economy in IPL seasons' 
+                    },
+                    subtitle: {
+                    text: ""
+                    },
+                    xAxis: {
+                            categories: Object.keys(econ),
+                            labels: {
+                            style: {
+                                color: 'black',
+                                fontSize:'12px',
+                                fontWeight:""
+                            }
+                            }
+                    },
+                    yAxis: {
+                        title: {
+                            text: ''
+                        }
+                    },
+                    legend: {
+                    layout: 'vertical',
+                    align: 'right',
+                    verticalAlign: 'middle'
+                    },
+                    series: [{
+                        name: "Bowling economy",
+                        data:Object.values(econ).map(a => Number(a))
+                    }],
+
+                    responsive: {
+                    rules: [{
+                        condition: {
+                        maxWidth: 500
+                        },
+                        chartOptions: {
+                        legend: {
+                            layout: 'horizontal',
+                            align: 'center',
+                            verticalAlign: 'bottom'
+                        }
+                        }
+                    }]
+                    }
+
+                });
+
+
+                Highcharts.chart('targetRuns', {
+                    title: {
+                    text: 'Shane Watson\'s 50\'s and 100\'s in IPL seasons' 
+                    },
+                    subtitle: {
+                    text: ""
+                    },
+                    xAxis: {
+                            categories: Object.keys(SRWatson),
+                            labels: {
+                            style: {
+                                color: 'black',
+                                fontSize:'12px',
+                                fontWeight:""
+                            }
+                            }
+                    },
+                    yAxis: {
+                        title: {
+                            text: ''
+                        }
+                    },
+                    legend: {
+                    layout: 'vertical',
+                    align: 'right',
+                    verticalAlign: 'middle'
+                    },
+                    series: [{
+                        name: "50's",
+                        data:Object.values(SRWatson).map(a => a.halfCenturies)
+                    },
+                    {
+                        name: "100's",
+                        data:Object.values(SRWatson).map(a => a.centuries)
+                    }],
+
+                    responsive: {
+                    rules: [{
+                        condition: {
+                        maxWidth: 500
+                        },
+                        chartOptions: {
+                        legend: {
+                            layout: 'horizontal',
+                            align: 'center',
+                            verticalAlign: 'bottom'
+                        }
+                        }
+                    }]
+                    }
+
+                });
+        }).catch((console.log));
+    }).catch((console.log));
+          
+    </script>
+    
+</html>
